@@ -20,6 +20,7 @@ class AZBillScraper(BillScraper):
     """
     jurisdiction = 'az'
     chamber_map = {'lower':'H', 'upper':'S'}
+    chamber_map_long = {'lower':'House', 'upper':'Senate'}
 
     def get_session_id(self, session):
         """
@@ -86,17 +87,18 @@ class AZBillScraper(BillScraper):
                 sponsor_type = 'primary'
             else:
                 sponsor_type = 'cosponsor'
-        
-        #Some older bills don't have the FullName key
-        if 'FullName' in sponsor['Legislator']:
-            sponsor_name = sponsor['Legislator']['FullName']
-        else:
-            sponsor_name = "{} {}".format(sponsor['Legislator']['FirstName'], sponsor['Legislator']['LastName'])
 
-        bill.add_sponsor(
-            type=sponsor_type,
-            name=sponsor_name
-        )
+            #Some older bills don't have the FullName key
+            if 'FullName' in sponsor['Legislator']:
+                sponsor_name = sponsor['Legislator']['FullName']
+            else:
+                sponsor_name = "{} {}".format(sponsor['Legislator']['FirstName'],
+                                              sponsor['Legislator']['LastName'])
+
+            bill.add_sponsor(
+                type=sponsor_type,
+                name=sponsor_name
+            )
 
     def scrape_subjects(self, bill, internal_id):
         # https://apps.azleg.gov/api/Keyword/?billStatusId=68149
@@ -127,12 +129,12 @@ class AZBillScraper(BillScraper):
                     )
                 except ValueError:
                     self.warning("Invalid Action Time {} for {}".format(page[action], action))
-                
+
 
 
     def actor_from_action(self, bill, action):
         """
-        Determine the actor from the action key  
+        Determine the actor from the action key
         If the action_map = 'chamber', return the bill's home chamber
         """
         action_map = action_utils.action_chamber_map
@@ -148,7 +150,7 @@ class AZBillScraper(BillScraper):
             session_id = self.get_session_id(session)
         except KeyError:
             raise NoDataForPeriod(session)
-   
+
         #Get the bills page to start the session
         req = self.get('http://www.azleg.gov/bills/')
 
@@ -157,30 +159,36 @@ class AZBillScraper(BillScraper):
             'sessionID': session_id
         }
         req = self.post(url=session_form_url, data=form, cookies=req.cookies, allow_redirects=True)
-        
+
         bill_list_url = 'http://www.azleg.gov/bills/'
-        
+
         page = self.get(bill_list_url, cookies=req.cookies).content
-        # There's an errant close-comment that browsers handle 
+        # There's an errant close-comment that browsers handle
         # but LXML gets really confused.
-        page = page.replace('--!>','-->')
+        page = page.replace('--!>', '-->')
         page = html.fromstring(page)
 
         bill_rows = []
-        if(chamber == 'lower'):
+        if chamber == 'lower':
             bill_rows = page.xpath('//div[@name="HBTable"]//tbody//tr')
             for row in bill_rows:
                 bill_id = row.xpath('td/a/text()')[0]
                 self.scrape_bill(chamber, session, bill_id)
-
-        elif (chamber == 'upper'):
+        elif chamber == 'upper':
             bill_rows = page.xpath('//div[@name="SBTable"]//tbody//tr')
             for row in bill_rows:
                 bill_id = row.xpath('td/a/text()')[0]
                 self.scrape_bill(chamber, session, bill_id)
- 
-        #TODO: MBTable - Non-bill Misc Motions?
 
+        chamber_name = self.chamber_map_long[chamber]
+
+        #careful, the rows we want are after the </tbody>
+        misc_rows = page.xpath('//div[@name="MBTable"]//table/' \
+                               'tr[contains(string(), "{}")]'.format(chamber_name))
+
+        for row in misc_rows:
+            bill_id = row.xpath('td/a/text()')[0]
+            self.scrape_bill(chamber, session, bill_id)
 
 
     def sort_bill_actions(self, bill):
