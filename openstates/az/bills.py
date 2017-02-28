@@ -20,6 +20,7 @@ class AZBillScraper(BillScraper):
     """
     jurisdiction = 'az'
     chamber_map = {'lower':'H', 'upper':'S'}
+    chamber_map_rev = {'H':'lower', 'S':'upper'}
     chamber_map_long = {'lower':'House', 'upper':'Senate'}
 
     def get_session_id(self, session):
@@ -50,6 +51,8 @@ class AZBillScraper(BillScraper):
             title=bill_title,
             type=bill_type
         )
+
+        self.scrape_votes(bill, internal_id)
         self.scrape_actions(bill, page)
         self.scrape_versions(bill, internal_id)
         self.scrape_sponsors(bill, internal_id)
@@ -69,13 +72,21 @@ class AZBillScraper(BillScraper):
         # https://apps.azleg.gov/api/DocType/?billStatusId=68408
         versions_url = 'https://apps.azleg.gov/api/DocType/?billStatusId={}'.format(internal_id)
         page = json.loads(self.get(versions_url).content)
-        if page and 'Documents' in page[0]:
-            for doc in page[0]['Documents']:
-                bill.add_version(
-                    name=doc['DocumentName'],
-                    url=doc['HtmlPath'],
-                    mimetype='text/html'
-                )
+        for group in page:
+            if group['DocumentGroupCode'] == 'BillDocuments':
+                for doc in group['Documents']:
+                    bill.add_version(
+                        name=doc['DocumentName'],
+                        url=doc['HtmlPath'],
+                        mimetype='text/html'
+                    )
+            elif group['DocumentGroupCode'] == 'MiscBillDocuments':
+                for doc in group['Documents']:
+                    bill.add_document(
+                        name=doc['DocumentName'],
+                        url=doc['HtmlPath'],
+                        mimetype='text/html'
+                    )
 
     def scrape_sponsors(self, bill, internal_id):
         # Careful, this sends XML to a browser but JSON to machines
@@ -101,6 +112,7 @@ class AZBillScraper(BillScraper):
             )
 
     def scrape_subjects(self, bill, internal_id):
+        # Careful, this sends XML to a browser but JSON to machines
         # https://apps.azleg.gov/api/Keyword/?billStatusId=68149
         subjects_url = 'https://apps.azleg.gov/api/Keyword/?billStatusId={}'.format(internal_id)
         page = json.loads(self.get(subjects_url).content)
@@ -118,7 +130,6 @@ class AZBillScraper(BillScraper):
         """
         for action in action_utils.action_map:
             if page[action] and action_utils.action_map[action]['name'] != '':
-                print page[action]
                 try:
                     action_date = datetime.datetime.strptime(page[action], '%Y-%m-%dT%H:%M:%S')
                     bill.add_action(
@@ -130,7 +141,42 @@ class AZBillScraper(BillScraper):
                 except ValueError:
                     self.warning("Invalid Action Time {} for {}".format(page[action], action))
 
+    def scrape_votes(self, bill, internal_id):
+        # Careful, this sends XML to a browser but JSON to machines
+        # https://apps.azleg.gov/api/BillStatusStandingAction/?billStatusId=69460&includeVotes=true&officialOnly=true
+        votes_url = 'https://apps.azleg.gov/api/BillStatusStandingAction/' \
+                     '?billStatusId={}&includeVotes=true&officialOnly=true'.format(internal_id)
+        page = json.loads(self.get(votes_url).content)
+        for vote in page:
+            if len(vote['Votes']):
+                vote_date = datetime.datetime.strptime(vote['ReportDate'], '%Y-%m-%dT%H:%M:%S')
+                motion = vote['ActionDescription']
+                if 'CommitteeName' in vote['Committee']:
+                    motion = "{} {}: {}".format(
+                        vote['Committee']['CommitteeName'],
+                        'Committee',
+                        motion
+                    )
 
+                chamber = self.chamber_map_rev[vote['Votes'][0]['Legislator']['Body']]
+                yes = vote['Ayes']
+                nos = vote['Nays']
+                other = vote['Present'] + vote['Absent']
+                vote_obj = Vote(chamber, vote_date, motion, yes > nos, yes, nos, other)
+
+                for roll in vote['Votes']:
+                    if 'FullName' in roll['Legislator']:
+                        voter_name = roll['Legislator']['FullName']
+                    else:
+                        voter_name = "{} {}".format(roll['Legislator']['FirstName'],
+                                                    roll['Legislator']['LastName'])
+
+                    if roll['Vote'] == 'Y':
+                        vote_obj.yes(voter_name)
+                    elif roll['Vote'] == 'N':
+                        vote_obj.no(voter_name)
+
+                bill.add_vote(vote_obj)
 
     def actor_from_action(self, bill, action):
         """

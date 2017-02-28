@@ -34,10 +34,10 @@ action_map = {
     'HouseConsentObjectDate':{'name': '',
                             'action': ['other']
                       },
-    'HouseMajCaucusDate':{'name': '',
+    'HouseMajCaucusDate':{'name': 'House Majority Caucus',
                       'action': ['other']
                      },
-    'HouseMajCaucusDate2':{'name': '',
+    'HouseMajCaucusDate2':{'name': 'House Majority Second Caucus',
                       'action': ['other']
                      },
     'HouseMajCaucusInd':{'name': '',
@@ -46,10 +46,10 @@ action_map = {
     'HouseMajCaucusInd2':{'name': '',
                       'action': ['other']
                      },
-    'HouseMinCaucusDate':{'name': '',
+    'HouseMinCaucusDate':{'name': 'House Minority Caucus',
                       'action': ['other']
                      },
-    'HouseMinCaucusDate2':{'name': '',
+    'HouseMinCaucusDate2':{'name': 'House Minority Second Caucus',
                       'action': ['other']
                      },
     'HouseMinCaucusInd':{'name': '',
@@ -82,7 +82,7 @@ action_map = {
     'SenateCaucusConcurRefuse':{'name': '',
                       'action': ['other']
                      },
-    'SenateConsentCalendarDate':{'name': '',
+    'SenateConsentCalendarDate':{'name': 'Placed on Senate Consent Calendar',
                       'action': ['other']
                      },
     'SenateConsentCalendarObject':{'name': '',
@@ -91,10 +91,10 @@ action_map = {
     'SenateConsentObjectDate':{'name': '',
                       'action': ['other']
                      },
-    'SenateMajCaucusDate':{'name': '',
+    'SenateMajCaucusDate':{'name': 'Senate Majority Caucus',
                       'action': ['other']
                      },
-    'SenateMajCaucusDate2':{'name': '',
+    'SenateMajCaucusDate2':{'name': 'Senate Majority Second Caucus',
                       'action': ['other']
                      },
     'SenateMajCaucusInd':{'name': '',
@@ -103,10 +103,10 @@ action_map = {
     'SenateMajCaucusInd2':{'name': '',
                       'action': ['other']
                      },
-    'SenateMinCaucusDate':{'name': '',
+    'SenateMinCaucusDate':{'name': 'Senate Minority Caucus',
                       'action': ['other']
                      },
-    'SenateMinCaucusDate2':{'name': '',
+    'SenateMinCaucusDate2':{'name': 'Senate Minority Second Caucus',
                       'action': ['other']
                      },
     'SenateMinCaucusInd':{'name': '',
