@@ -1,8 +1,7 @@
 import re
 import datetime
 
-from billy.scrape.bills import BillScraper, Bill
-from billy.scrape.votes import Vote
+from pupa.scrape import Scraper, Bill
 from openstates.utils import LXMLMixin
 
 import lxml.html
@@ -22,8 +21,7 @@ SUB_BLACKLIST = [
 ]  # Pages are the same, we'll strip this from bills we catch.
 
 
-class UTBillScraper(BillScraper, LXMLMixin):
-    jurisdiction = 'ut'
+class UTBillScraper(Scraper):
 
     def scrape(self, session, chambers):
         self.validate_session(session)
@@ -100,7 +98,15 @@ class UTBillScraper(BillScraper, LXMLMixin):
                 bill_id = bill_id.replace(flag, " ")
         bill_id = re.sub("\s+", " ", bill_id).strip()
 
-        bill = Bill(session, chamber, bill_id, title, type=bill_type)
+        Bill(
+            bill_id,
+            legislative_session=session,  # A session name from the metadata's `legislative_sessions`
+            chamber=chamber,  # 'upper' or 'lower'
+            title=title,
+            classification=bill_type  # eg, 'bill', 'resolution', 'joint resolution', etc.
+            )
+
+
         bill.add_source(url)
 
         primary_info = page.xpath('//div[@id="billsponsordiv"]')
