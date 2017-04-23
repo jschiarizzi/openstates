@@ -191,7 +191,7 @@ class UTBillScraper(Scraper):
             uniqid += 1
             date = row.xpath('string(td[1])')
             date = date.split("(")[0]
-            date = datetime.datetime.strptime(date.strip(), "%m/%d/%Y").date()
+            date = datetime.datetime.strptime(date.strip(), "%Y/%m/%d").date()
 
             action = row.xpath('string(td[2])').strip()
             actor = bill['chamber']
@@ -242,8 +242,16 @@ class UTBillScraper(Scraper):
                 type = 'committee:passed:favorable'
             else:
                 type = 'other'
-            bill.add_action(actor, action, date, type=type,
-                            _vote_id=uniqid)
+
+            #bill.add_action(actor, action, date, type=type,
+            #                _vote_id=uniqid)
+            bill.add_action(
+                action,  # Action description, from the state
+                date,  # `YYYY-MM-DD` format
+                chamber=actor,  # 'upper' or 'lower', or 'executive'
+                classification=type  # Options explained in the next section
+            )
+
 
             # Check if this action is a vote
             vote_links = row.xpath('./td[4]//a')
