@@ -229,11 +229,11 @@ class UTBillScraper(Scraper):
             elif action.startswith('2nd reading'):
                 type = 'reading-2'
             elif action.startswith('3rd reading'):
-                type = 'reading-3'
+                type = 'bill:reading:3'
             elif action == 'failed':
                 type = 'failure'
             elif action.startswith('2nd & 3rd readings'):
-                type = ['reading-2', 'reading-3']
+                type = ['reading-2', 'bill:reading:3']
             elif action == 'passed 2nd reading':
                 type = 'reading-2'
             elif 'Comm - Favorable Recommendation' in action:
