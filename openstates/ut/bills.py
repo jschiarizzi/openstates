@@ -167,7 +167,7 @@ class UTBillScraper(Scraper):
         status_table = page.xpath('//div[@id="billStatus"]//table')[0]
         self.parse_status(bill, status_table)
 
-        self.save_bill(bill)
+        yield bill
 
     def parse_status(self, bill, status_table):
         page = status_table
