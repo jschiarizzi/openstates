@@ -322,7 +322,7 @@ class UTBillScraper(Scraper):
             for voter in vote_dict[key]['votes']:
                 getattr(vote, key)(voter)
 
-        bill.add_vote(vote)
+        yield vote
 
     def parse_html_vote(self, bill, actor, date, motion, url, uniqid):
         try:
@@ -395,7 +395,7 @@ class UTBillScraper(Scraper):
             vote.other(person)
 
         self.info("Adding vote to bill")
-        bill.add_vote(vote)
+        yield vote
 
     def parse_vote(self, bill, actor, date, motion, url, uniqid):
         page = self.get(url).text
@@ -442,4 +442,4 @@ class UTBillScraper(Scraper):
             if other:
                 vote.other(other)
 
-        bill.add_vote(vote)
+        yield vote
