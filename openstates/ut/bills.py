@@ -116,7 +116,14 @@ class UTBillScraper(Scraper):
                              if x.strip()]
             assert title == "Bill Sponsor:"
             name = name.replace("Sen. ", "").replace("Rep. ", "")
-            bill.add_sponsor('primary', name)
+
+            #bill.add_sponsor('primary', name)
+            bill.add_sponsorship(
+                name,  # Sponsor's name
+                classification='primary',  # The state's classification; eg, 'co-sponsor', 'co-author', 'primary'
+                entity_type='person',  # If the bill is sponsored by a committee, this should be 'organization' instead
+                primary=True  # Boolean value
+            )
 
         floor_info = page.xpath('//div[@id="floorsponsordiv"]//text()')
         floor_info = [x.strip() for x in floor_info if x.strip()]
@@ -127,7 +134,14 @@ class UTBillScraper(Scraper):
             assert floor_info[0] == "Floor Sponsor:"
             floor_sponsor = floor_info[1].\
                     replace("Sen. ", "").replace("Rep. ", "")
-            bill.add_sponsor('cosponsor', floor_sponsor)
+
+            bill.add_sponsorship(
+                floor_sponsor,  # Sponsor's name
+                classification='cosponsor',  # The state's classification; eg, 'co-sponsor', 'co-author', 'primary'
+                entity_type='person',  # If the bill is sponsored by a committee, this should be 'organization' instead
+                primary=False  # Boolean value
+            )
+
         else:
             raise AssertionError("Unexpected floor sponsor HTML found")
 
