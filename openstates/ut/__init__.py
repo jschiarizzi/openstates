@@ -11,6 +11,7 @@ class Utah(Jurisdiction):
     scrapers = {
         'people': UTPersonScraper,
         'committees': UTCommitteeScraper,
+        'bills': UTBillScraper,
     }
     parties = [
         {'name': 'Republican'},
